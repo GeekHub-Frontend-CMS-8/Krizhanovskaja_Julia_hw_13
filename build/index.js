@@ -1,79 +1,104 @@
- jQuery(function ($) {
-    const todosArray = [];
-    const todoList = $('#todoList');
-    const inputAdd = $('input');
-    const loadMore = $('#loadMore');
+'use strict';
+
+window.onload = function () {
+    const form = document.querySelector('form');
+    const inputForm = document.querySelector('.input-form');
+    const listItems = document.querySelector('.todo-list-items');
+    let todosStore;
+
+    form.addEventListener('submit', addTask);
+
+    listItems.addEventListener('click', changeItemList);
 
 
-
-     function addTodo (value) {
-         todosArray.push(value);
-         renderTodos();
-     }
-
-    function renderTodos (art) {
-        todoList.empty();
-        $.each(todosArray, function (i) {
-            todoList.prepend(
-                `<li>
-                            ${this || art}
-                            <input class="checkbox" type="checkbox">
-                            <button id="remmove" data-index="${i}">X</button>
-                        </li>`);
-        });
+    function store() {
+        todosStore = listItems.innerHTML;
+        window.localStorage.myitems = todosStore;
     }
 
-    function removeTodo (index) {
-        todosArray.splice(index, 1);
-        renderTodos();
+    function addTask(e) {
+        e.preventDefault();
+        if (inputForm.value.length) {
+            listItems.appendChild(
+                createItemTask(inputForm.value)
+            );
+            store();
+            inputForm.value = '';
+        }
+
+
     }
 
-    inputAdd.on('change', function () {
-        addTodo(this.value);
-        this.value = '';
-    });
+    function createItemTask(textTask) {
+        const itemTask = document.createElement('li');
+        const inputCheck = document.createElement('input');
+        const removeBtn = document.createElement('button');
 
-    $(document).on('click', '#remmove', function (){
-        const index = $(this).data('index');
-        removeTodo(index);
-    });
+        itemTask.className = 'itemTask list-group-item d-flex justify-content-between align-items-center';
 
-     $(document).on('change', '.checkbox', function() {
-         if ($(this).attr('checked')) {
-             $(this).removeAttr('checked');
-         } else {
-             $(this).attr('checked', 'checked');
-         }
+        itemTask.setAttribute('data-click', 'changeTask');
 
-         $(this).parent().toggleClass('completed');
-     });
+        inputCheck.setAttribute('type','checkbox');
+        inputCheck.setAttribute('data-click', 'checkbox');
 
-     $(document).on('click', '#edit', function (){
-         const index = $(this).data('index');
-         editTodo(index);
-     });
+        removeBtn.className = 'itemTask btn btn-danger';
+        removeBtn.setAttribute('data-click', 'remove');
 
+        const textBtnRemove = document.createTextNode('delete');
+        removeBtn.appendChild(textBtnRemove);
+        const text = document.createTextNode(textTask);
 
-     loadMore.on('click', request);
+        itemTask.appendChild(inputCheck);
+        itemTask.appendChild(text);
+        itemTask.appendChild(removeBtn);
 
-     function request() {
-         var xhr = new XMLHttpRequest();
+        store(itemTask);
 
-         xhr.open('GET', 'https://jsonplaceholder.typicode.com/todos', false);
+        return itemTask;
+    }
 
-         xhr.send();
-         if (xhr.status != 200) {
-             alert( xhr.status + ': ' + xhr.statusText ); // пример вывода: 404: Not Found
-         } else {
-             const user = JSON.parse(xhr.responseText);
-             console.log(user);
-             return user;
-         }
+    function changeItemList(e){
+        const target = e.target.getAttribute('data-click');
+        console.dir(e.target);
+        switch (target) {
+            case 'checkbox':
+                const el = e.target.parentNode;
+                el.classList.toggle('checked');
+                store();
+                break;
+            case 'changeTask':
+                console.dir(e.target.childNodes[1].data);
+                inputForm.value = e.target.childNodes[1].data;
+                const li = e.target;
+                li.remove();
+                store();
+                break;
+            case 'remove':
+                const elem = e.target.parentNode;
+                elem.remove();
+                store();
+                break;
+            default: null
+                break;
 
-     }
+        }
+        if (target === 'checkbox') {
 
+        }
 
- });
+    }
+
+    function getValues() {
+        const storedValues = window.localStorage.myitems;
+        if(!storedValues) {
+            listItems.innerHTML = null;
+        }
+        else {
+            listItems.innerHTML = storedValues;
+        }
+    }
+    getValues();
+};
 
 
 
